@@ -282,6 +282,8 @@ function highlightSentencesInPage(sentences) {
                 el.style.borderLeft = '4px solid #ef4444';
                 el.style.paddingLeft = '10px';
                 el.style.borderRadius = '3px';
+                el.style.transition = 'all 0.5s ease';
+                el.setAttribute('data-truthlens', 'true');
 
                 if (!scrolled) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -291,5 +293,37 @@ function highlightSentencesInPage(sentences) {
                 break; // Found a match, move to the next HTML element
             }
         }
+    });
+}
+
+// --- NEW EVENT LISTENER: Clear Highlights Button ---
+const clearHighlightsLogic = async () => {
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: removeHighlightsFromPage
+    });
+};
+// Attach it to the button on the Results screen
+document.getElementById('clearHighlightsBtn')?.addEventListener('click', clearHighlightsLogic);
+
+// Attach it to the button on the Idle (Home) screen
+document.getElementById('clearHighlightsBtnIdle')?.addEventListener('click', clearHighlightsLogic);
+
+// --- NEW HELPER FUNCTION: The Eraser ---
+// Injected into the page to find our sticky notes and remove the CSS
+function removeHighlightsFromPage() {
+    // Find all elements we tagged with our specific data attribute
+    const highlightedElements = document.querySelectorAll('[data-truthlens="true"]');
+    
+    highlightedElements.forEach(el => {
+        // Strip away ONLY our specific TruthLens styles
+        el.style.backgroundColor = '';
+        el.style.borderLeft = '';
+        el.style.paddingLeft = '';
+        el.style.borderRadius = '';
+        
+        // Remove the sticky note tag so it's perfectly clean
+        el.removeAttribute('data-truthlens');
     });
 }

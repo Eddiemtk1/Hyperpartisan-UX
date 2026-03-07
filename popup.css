@@ -424,3 +424,22 @@ code {
     color: var(--danger-light);
     font-size: 12px;
 }
+
+/* Clear highlight button */
+.secondary-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background-color: transparent;
+    color: #ef4444; /* Matches your red theme */
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.secondary-button:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+}

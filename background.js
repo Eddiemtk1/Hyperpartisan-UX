@@ -70,6 +70,7 @@ function highlightSentencesInPage(sentences) {
                 el.style.paddingLeft = '10px';
                 el.style.borderRadius = '3px';
                 el.style.transition = 'all 0.5s ease';
+                el.setAttribute('data-truthlens', 'true');
 
                 if (!scrolled) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
