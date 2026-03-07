@@ -3,15 +3,15 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
         const tabId = tabs[0].id;
         const storageKey = `bias_result_${tabId}`;
-        
+
         chrome.storage.local.get([storageKey], (result) => {
             if (result[storageKey]) {
                 console.log("TruthLens: Found cached results for this tab!");
                 const data = result[storageKey];
-                
+
                 // 1. Rebuild the popup UI
                 renderResult(data);
-                
+
                 // 2. Re-apply the highlights to the actual webpage!
                 if (data.is_hyperpartisan && data.biased_items) {
                     const sentencesToHighlight = data.biased_items.map(item => item.sentence);
@@ -61,12 +61,17 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
             return;
         }
 
+        //Inject mozilla readbility library first first.
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['Readability.js']});
+
         // 1. FIRST, inject the scraper to get the text from the webpage
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: scrapePageText,
         }, (injectionResults) => {
-            
+
             if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
                 switchState(states.ERROR);
                 console.error("Injection failed.");
@@ -82,7 +87,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
                 text: scrapedText,
                 tabId: tab.id
             }, (response) => {
-                
+
                 if (chrome.runtime.lastError) {
                     console.error("Communication Error:", chrome.runtime.lastError.message);
                     switchState(states.ERROR);
@@ -217,42 +222,28 @@ function renderResult(data) {
     }, 150);
 }
 
-// NOTE: This function is serialized and executed in the context of the active tab.
+//I used Mozilla's readability.js to scrape an article.
 function scrapePageText() {
-    const contentNodes = document.querySelectorAll('article p, main p, .story-body p, .article-content p');
-    let textArray = [];
+    try {
+        // 1. Readability actually modifies the DOM when it runs. 
+        // We MUST clone the document first so we don't accidentally destroy the live webpage!
+        var documentClone = document.cloneNode(true);
 
-    // Words that indicate UI, paywalls, or marketing boilerplate
-    const blacklist = ['subscribe', 'create an account', 'newsletter', 'sign up', 'log in', 'free articles'];
+        // 2. Pass the clone to Mozilla's engine
+        var reader = new Readability(documentClone);
+        var article = reader.parse();
 
-    function isValidNode(node) {
-        const text = node.innerText.trim();
-        const lowerText = text.toLowerCase();
-
-        // 1. Is it trapped in a known non-article wrapper?
-        const isJunk = node.closest('nav, header, footer, aside, .sidebar, .comments, .paywall, .ad, form');
-
-        // 2. Does it contain obvious marketing speak?
-        const hasBoilerplate = blacklist.some(word => lowerText.includes(word));
-
-        // 3. Is it too short to be a real journalistic sentence?
-        const isLongEnough = text.split(/\s+/).length > 8;
-
-        return !isJunk && !hasBoilerplate && isLongEnough;
+        if (article && article.textContent) {
+            // 3. Clean up the extracted text (remove excessive whitespace and line breaks)
+            return article.textContent.replace(/\s+/g, ' ').trim();
+        } else {
+            throw new Error("Readability could not parse the article.");
+        }
+    } catch (e) {
+        console.error("Readability failed, falling back to basic extraction.", e);
+        // Fallback just in case the algorithm fails
+        return document.body.innerText.replace(/\s+/g, ' ').trim();
     }
-
-    if (contentNodes.length > 0) {
-        contentNodes.forEach(node => {
-            if (isValidNode(node)) textArray.push(node.innerText.trim());
-        });
-    } else {
-        // Fallback
-        document.querySelectorAll('p').forEach(node => {
-            if (isValidNode(node)) textArray.push(node.innerText.trim());
-        });
-    }
-
-    return textArray.join(" ");
 }
 
 // Injected into the page to highlight multiple biased paragraphs
@@ -315,14 +306,14 @@ document.getElementById('clearHighlightsBtnIdle')?.addEventListener('click', cle
 function removeHighlightsFromPage() {
     // Find all elements we tagged with our specific data attribute
     const highlightedElements = document.querySelectorAll('[data-truthlens="true"]');
-    
+
     highlightedElements.forEach(el => {
         // Strip away ONLY our specific TruthLens styles
         el.style.backgroundColor = '';
         el.style.borderLeft = '';
         el.style.paddingLeft = '';
         el.style.borderRadius = '';
-        
+
         // Remove the sticky note tag so it's perfectly clean
         el.removeAttribute('data-truthlens');
     });
