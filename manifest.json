@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Hyperpartisan Bias Detector",
+  "version": "1.0",
+  "description": "Scans news articles for manipulative, hyperpartisan language using RoBERTa and Llama-3.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*"
+  ]
+}

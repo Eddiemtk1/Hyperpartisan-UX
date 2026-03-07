@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bias Detector</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="url(#paint0_linear)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M12 16V12" stroke="url(#paint0_linear)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M12 8H12.01" stroke="url(#paint0_linear)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <defs>
+                        <linearGradient id="paint0_linear" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#4F46E5" />
+                            <stop offset="1" stop-color="#EC4899" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h2>TruthLens</h2>
+            </div>
+            <p class="subtitle">AI-Powered Bias Detection</p>
+        </header>
+
+        <main>
+            <!-- IDLE STATE -->
+            <div class="state-container" id="state-idle">
+                <p class="instruction">Scan the current article to uncover manipulative or hyperpartisan language.</p>
+                <button id="scanBtn" class="btn primary-btn">
+                    <span class="btn-text">Analyze Article</span>
+                    <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- LOADING STATE -->
+            <div class="state-container hidden" id="state-loading">
+                <div class="scanner-box">
+                    <div class="scanner-line"></div>
+                </div>
+                <p class="loading-text">Analyzing text with RoBERTa <span
+                        class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+            </div>
+
+            <!-- RESULT STATE -->
+            <div class="state-container hidden" id="state-result">
+                <div class="status-card" id="status-card">
+                    <div class="status-header">
+                        <div class="icon-wrapper" id="status-icon-wrapper">
+                            <!-- Icon injected by JS -->
+                        </div>
+                        <h3 id="verdict-title">Analysis Complete</h3>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+                        <span
+                            style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">AI
+                            Confidence</span>
+                        <p class="confidence-text" id="confidence-text" style="margin: 0;">0%</p>
+                    </div>
+                    <div class="confidence-bar-container">
+                        <div class="confidence-bar" id="confidence-bar"></div>
+                    </div>
+
+                    <!-- Biased Content -->
+                    <div class="result-content hidden" id="biased-content">
+                        <div id="biased-items-container"
+                            style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                        </div>
+                    </div>
+
+                    <!-- Neutral Content -->
+                    <div class="result-content hidden" id="neutral-content">
+                        <p class="neutral-text" id="neutral-explanation">The article appears to use neutral, objective
+                            language.</p>
+                    </div>
+                </div>
+
+                <button id="resetBtn" class="btn secondary-btn">Scan Another Article</button>
+            </div>
+
+            <!-- ERROR STATE -->
+            <div class="state-container hidden" id="state-error">
+                <div class="error-box">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h4>Analysis Failed</h4>
+                    <p id="error-text">Make sure your local Python server is running on <code>127.0.0.1:8000</code>.</p>
+                </div>
+                <button id="retryBtn" class="btn secondary-btn">Try Again</button>
+            </div>
+        </main>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>
