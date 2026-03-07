@@ -1,3 +1,19 @@
+// When the popup opens, check if we already scanned this specific tab
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+        const tabId = tabs[0].id;
+        const storageKey = `bias_result_${tabId}`;
+
+        chrome.storage.local.get([storageKey], (result) => {
+            if (result[storageKey]) {
+                console.log("TruthLens: Found cached results for this tab!");
+                // Instantly show the cached results instead of the IDLE screen
+                renderResult(result[storageKey]);
+            }
+        });
+    }
+});
+
 // UI State Management
 const states = {
     IDLE: 'state-idle',
@@ -26,54 +42,63 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        // Verify if it's a restricted Chrome URL where content scripts can't be injected
+        // Prevent scanning restricted Chrome pages
         if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
-            throw new Error("Cannot scan system or browser internal pages.");
+            switchState(states.ERROR);
+            console.error("Blocked: Cannot scan internal browser pages.");
+            return;
         }
 
+        // 1. FIRST, inject the scraper to get the text from the webpage
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: scrapePageText,
-        }, async (injectionResults) => {
+        }, (injectionResults) => {
+            
             if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
-                const errMsg = chrome.runtime.lastError ? chrome.runtime.lastError.message : "Could not inject script";
-                displayError("Injection Failed", errMsg);
+                switchState(states.ERROR);
+                console.error("Injection failed.");
                 return;
             }
 
-            let articleText = injectionResults[0].result;
+            // 2. DEFINE the scrapedText variable here!
+            const scrapedText = injectionResults[0].result;
 
-            try {
-                let response = await fetch('http://127.0.0.1:8000/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: articleText })
-                });
-
-                if (!response.ok) throw new Error("Server response not ok");
-
-                let data = await response.json();
-                renderResult(data);
-                if (data.is_hyperpartisan && data.biased_items.length > 0) {
-                    // Extract just the sentences into a single array
-                    const sentencesToHighlight = data.biased_items.map(item => item.sentence);
-
-                    // Inject the script ONCE, passing the whole array
-                    chrome.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        func: highlightSentencesInPage,
-                        args: [sentencesToHighlight]
-                    });
+            // 3. NOW send the message to the background script
+            chrome.runtime.sendMessage({
+                action: "analyzeArticle",
+                text: scrapedText,
+                tabId: tab.id
+            }, (response) => {
+                
+                if (chrome.runtime.lastError) {
+                    console.error("Communication Error:", chrome.runtime.lastError.message);
+                    switchState(states.ERROR);
+                    return;
                 }
 
-            } catch (err) {
-                console.error(err);
-                displayError("Connection Error", "Make sure your local Python server is running on <code>127.0.0.1:8000</code>.");
-            }
+                if (response && response.success) {
+                    const data = response.data;
+                    renderResult(data);
+
+                    if (data.is_hyperpartisan && data.biased_items) {
+                        const sentencesToHighlight = data.biased_items.map(item => item.sentence);
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: highlightSentencesInPage,
+                            args: [sentencesToHighlight]
+                        });
+                    }
+                } else {
+                    console.error("TruthLens Server/API Error:", response?.error);
+                    switchState(states.ERROR);
+                }
+            });
         });
-    } catch (err) {
-        console.error(err);
-        displayError("Scan Failed", err.message);
+
+    } catch (error) {
+        console.error("Critical Error in listener:", error);
+        switchState(states.ERROR);
     }
 });
 
@@ -191,13 +216,13 @@ function scrapePageText() {
     function isValidNode(node) {
         const text = node.innerText.trim();
         const lowerText = text.toLowerCase();
-        
+
         // 1. Is it trapped in a known non-article wrapper?
         const isJunk = node.closest('nav, header, footer, aside, .sidebar, .comments, .paywall, .ad, form');
-        
+
         // 2. Does it contain obvious marketing speak?
         const hasBoilerplate = blacklist.some(word => lowerText.includes(word));
-        
+
         // 3. Is it too short to be a real journalistic sentence?
         const isLongEnough = text.split(/\s+/).length > 8;
 
@@ -214,7 +239,7 @@ function scrapePageText() {
             if (isValidNode(node)) textArray.push(node.innerText.trim());
         });
     }
-    
+
     return textArray.join(" ");
 }
 
@@ -234,15 +259,15 @@ function highlightSentencesInPage(sentences) {
 
         for (let sentence of sentences) {
             const sentenceClean = cleanText(sentence);
-            
+
             // Grab the first 35 characters (about 5-7 words) to act as a unique fingerprint
             const fingerprint = sentenceClean.substring(0, 35);
 
             // If the element's clean text contains our fingerprint, it's a guaranteed match
             if (fingerprint.length > 10 && elClean.includes(fingerprint)) {
-                
-                el.style.backgroundColor = 'rgba(252, 165, 165, 0.3)'; 
-                el.style.borderLeft = '4px solid #ef4444'; 
+
+                el.style.backgroundColor = 'rgba(252, 165, 165, 0.3)';
+                el.style.borderLeft = '4px solid #ef4444';
                 el.style.paddingLeft = '10px';
                 el.style.borderRadius = '3px';
 
@@ -250,7 +275,7 @@ function highlightSentencesInPage(sentences) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     scrolled = true;
                 }
-                
+
                 break; // Found a match, move to the next HTML element
             }
         }
