@@ -3,12 +3,24 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
         const tabId = tabs[0].id;
         const storageKey = `bias_result_${tabId}`;
-
+        
         chrome.storage.local.get([storageKey], (result) => {
             if (result[storageKey]) {
                 console.log("TruthLens: Found cached results for this tab!");
-                // Instantly show the cached results instead of the IDLE screen
-                renderResult(result[storageKey]);
+                const data = result[storageKey];
+                
+                // 1. Rebuild the popup UI
+                renderResult(data);
+                
+                // 2. Re-apply the highlights to the actual webpage!
+                if (data.is_hyperpartisan && data.biased_items) {
+                    const sentencesToHighlight = data.biased_items.map(item => item.sentence);
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabId },
+                        func: highlightSentencesInPage, // Ensure this function is still at the bottom of popup.js
+                        args: [sentencesToHighlight]
+                    });
+                }
             }
         });
     }
