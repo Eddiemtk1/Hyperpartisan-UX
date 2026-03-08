@@ -96,15 +96,6 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
                 if (response && response.success) {
                     const data = response.data;
                     renderResult(data);
-
-                    if (data.is_hyperpartisan && data.biased_items) {
-                        const sentencesToHighlight = data.biased_items.map(item => item.sentence);
-                        chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            func: highlightSentencesInPage,
-                            args: [sentencesToHighlight]
-                        });
-                    }
                 } else {
                     console.error("TruthLens Server/API Error:", response?.error);
                 }
@@ -209,6 +200,11 @@ function scrapePageText() {
 
 function highlightSentencesInPage(sentences) {
     if (!sentences || sentences.length === 0) return;
+
+    if (document.querySelector('[data-truthlens="true"]')) {
+        console.log("TruthLens: Highlights already exist. Skipping redundant highlight pass.");
+        return;
+    }
 
     const elements = document.querySelectorAll('p, h1, h2, h3, h4, li');
     let scrolled = false;
