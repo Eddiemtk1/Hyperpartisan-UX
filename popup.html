@@ -1,48 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TruthLens</title>
     <link rel="stylesheet" href="popup.css">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
 </head>
+
 <body>
 
     <header class="header">
         <h1>
-            <span class="material-symbols-outlined icon-primary">language</span>
+            <img src="logo.png" alt="TruthLens Logo" style="width: 24px; height: 24px; object-fit: contain;">
             TruthLens
         </h1>
         <span class="material-symbols-outlined" style="color: var(--text-muted); cursor: pointer;">settings</span>
     </header>
 
     <main class="main-content">
-        
+
         <div id="state-idle" class="state-screen active">
             <div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
-                <span class="material-symbols-outlined icon-primary" style="font-size: 64px;">policy</span>
-                <h2 style="margin: 16px 0 8px 0;">Ready to Analyze</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-top: 0;">Scan this article for hyperpartisan language.</p>
+                <img src="logo.png" alt="TruthLens Logo"
+                    style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 16px;">
+                <h2 style="margin: 0 0 8px 0;">Ready to Analyze</h2>
+                <p style="color: var(--text-muted); font-size: 14px; margin-top: 0;">Scan this article for hyperpartisan
+                    language.</p>
             </div>
-            
+
             <button id="scanBtn" class="btn-primary">Analyze Article</button>
             <button id="clearHighlightsBtnIdle" class="btn-secondary">Clear Highlights</button>
         </div>
 
         <div id="state-loading" class="state-screen">
             <div style="text-align: center; margin-top: 80px;">
-                <span class="material-symbols-outlined icon-primary" style="font-size: 48px; animation: pulse 1.5s infinite;">sync</span>
+                <span class="material-symbols-outlined icon-primary"
+                    style="font-size: 48px; animation: pulse 1.5s infinite;">sync</span>
                 <h3>Analyzing text...</h3>
                 <p style="color: var(--text-muted); font-size: 13px;">Using Llama-3 to detect bias patterns.</p>
             </div>
         </div>
 
         <div id="state-results" class="state-screen">
-            
+
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary);"></span>
-                <span style="color: var(--primary); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Analysis Complete</span>
+                <span
+                    style="color: var(--primary); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Analysis
+                    Complete</span>
             </div>
 
             <div class="card">
@@ -62,7 +70,8 @@
             </div>
 
             <div id="ui-alert-box" class="alert-box">
-                <span id="ui-alert-icon" class="material-symbols-outlined" style="color: var(--warning-icon);">warning</span>
+                <span id="ui-alert-icon" class="material-symbols-outlined"
+                    style="color: var(--warning-icon);">warning</span>
                 <div>
                     <h4 id="ui-alert-title" class="alert-title">Hyperpartisan Detected</h4>
                     <p id="ui-alert-desc" class="alert-desc">Language used is emotionally loaded.</p>
@@ -79,11 +88,12 @@
 
             <button id="resetBtn" class="btn-primary">Scan Another Article</button>
             <button id="clearHighlightsBtn" class="btn-secondary">Clear Highlights</button>
-            
+
         </div>
-        
+
     </main>
 
     <script src="popup.js"></script>
 </body>
+
 </html>
