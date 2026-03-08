@@ -17,7 +17,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     const sentencesToHighlight = data.biased_items.map(item => item.sentence);
                     chrome.scripting.executeScript({
                         target: { tabId: tabId },
-                        func: highlightSentencesInPage, // Ensure this function is still at the bottom of popup.js
+                        func: highlightSentencesInPage, 
                         args: [sentencesToHighlight]
                     });
                 }
@@ -26,23 +26,23 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     }
 });
 
-// UI State Management
+// UI State Management - FIXED ID TO MATCH HTML
 const states = {
     IDLE: 'state-idle',
     LOADING: 'state-loading',
-    RESULT: 'state-result',
+    RESULTS: 'state-results', // Added the 'S' here!
     ERROR: 'state-error'
 };
 
 function switchState(targetState) {
-    // Hide all states by applying 'hidden' class
+    // Hide all states by applying 'hidden' class or setting display:none
     Object.values(states).forEach(stateId => {
         const el = document.getElementById(stateId);
         if (el) {
             if (stateId === targetState) {
-                el.classList.remove('hidden');
+                el.classList.add('active'); // Using our CSS .active class
             } else {
-                el.classList.add('hidden');
+                el.classList.remove('active');
             }
         }
     });
@@ -56,15 +56,16 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
 
         // Prevent scanning restricted Chrome pages
         if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
-            switchState(states.ERROR);
             console.error("Blocked: Cannot scan internal browser pages.");
+            // Optional: You can create a specific error screen later
             return;
         }
 
-        //Inject mozilla readbility library first first.
+        // Inject mozilla readability library first
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
-            files: ['Readability.js']});
+            files: ['Readability.js']
+        });
 
         // 1. FIRST, inject the scraper to get the text from the webpage
         chrome.scripting.executeScript({
@@ -73,7 +74,6 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
         }, (injectionResults) => {
 
             if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
-                switchState(states.ERROR);
                 console.error("Injection failed.");
                 return;
             }
@@ -90,7 +90,6 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
 
                 if (chrome.runtime.lastError) {
                     console.error("Communication Error:", chrome.runtime.lastError.message);
-                    switchState(states.ERROR);
                     return;
                 }
 
@@ -108,170 +107,122 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
                     }
                 } else {
                     console.error("TruthLens Server/API Error:", response?.error);
-                    switchState(states.ERROR);
                 }
             });
         });
 
     } catch (error) {
         console.error("Critical Error in listener:", error);
-        switchState(states.ERROR);
     }
 });
 
-document.getElementById('resetBtn').addEventListener('click', () => {
+// FIXED: Hooked up to the new "Scan Another Article" button ID
+document.getElementById('resetBtn')?.addEventListener('click', () => {
     switchState(states.IDLE);
-    // Reset bar width for next animation
-    document.getElementById('confidence-bar').style.width = '0%';
+    document.getElementById('ui-confidence-fill').style.width = '0%';
 });
 
-document.getElementById('retryBtn').addEventListener('click', () => {
-    switchState(states.IDLE);
-});
-
-function displayError(title, messageHtml) {
-    const errorBox = document.querySelector('.error-box');
-    errorBox.querySelector('h4').innerText = title;
-    document.getElementById('error-text').innerHTML = messageHtml;
-    switchState(states.ERROR);
-}
-
+// --- POPULATING THE NEW UI ---
 function renderResult(data) {
-    const statusCard = document.getElementById('status-card');
-    const iconWrapper = document.getElementById('status-icon-wrapper');
-    const verdictTitle = document.getElementById('verdict-title');
-    const confidenceBar = document.getElementById('confidence-bar');
-    const confidenceText = document.getElementById('confidence-text');
+    switchState(states.RESULTS);
 
-    // Reset card classes
-    statusCard.className = 'status-card';
+    // 1. Update the Confidence Score Card
+    const confidencePct = Math.round(data.overall_confidence * 100);
+    document.getElementById('ui-confidence-score').textContent = `${confidencePct}%`;
+    
+    // Animate the progress bar width
+    setTimeout(() => {
+        document.getElementById('ui-confidence-fill').style.width = `${confidencePct}%`;
+    }, 100); 
 
-    // Force parse as a float and provide a hard 0 fallback
-    let confValue = parseFloat(data.overall_confidence || data.confidence || 0);
-    let confidencePercentage = (confValue * 100).toFixed(1);
-
-    // Ultimate failsafe
-    if (isNaN(confidencePercentage)) {
-        confidencePercentage = "0.0";
-    }
+    // 2. Update the Alert Box
+    const alertBox = document.getElementById('ui-alert-box');
+    const alertTitle = document.getElementById('ui-alert-title');
+    const alertDesc = document.getElementById('ui-alert-desc');
+    const alertIcon = document.getElementById('ui-alert-icon');
 
     if (data.is_hyperpartisan) {
-        // Hyperpartisan styling
-        statusCard.classList.add('danger');
-
-        // Alert Icon
-        iconWrapper.innerHTML = `
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-        `;
-        verdictTitle.innerText = "High Bias Detected";
-
-        const container = document.getElementById('biased-items-container');
-        container.innerHTML = ''; // Clear previous results
-
-        data.biased_items.forEach((item, index) => {
-            const itemHtml = `
-                <div style="margin-bottom: 24px;">
-                    <div class="quote-box">
-                        <svg class="quote-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                            <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                        </svg>
-                        <p style="margin: 0; font-size: 14px; font-style: italic; line-height: 1.6; color: var(--text-primary);">"${item.sentence}"</p>
-                    </div>
-                    <div class="explanation-box">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                            <h4 style="margin: 0; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Why is this flagged?</h4>
-                            <span class="bias-badge">${item.bias_type || 'General Bias'}</span>
-                        </div>
-                        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-secondary);">${item.explanation}</p>
-                    </div>
-                </div>
-            `;
-            container.innerHTML += itemHtml;
-        });
-
-        document.getElementById('biased-content').classList.remove('hidden');
-        document.getElementById('neutral-content').classList.add('hidden');
-
+        // Keep the warning styling defined in the CSS
+        alertBox.style.backgroundColor = 'var(--warning-bg)';
+        alertBox.style.borderColor = 'var(--warning-border)';
+        alertTitle.style.color = 'var(--warning-text)';
+        alertDesc.style.color = 'var(--warning-text)';
+        alertIcon.style.color = 'var(--warning-icon)';
+        alertIcon.textContent = 'warning';
+        
+        alertTitle.textContent = "Hyperpartisanship Detected";
+        alertDesc.textContent = "The AI flagged manipulative or partisan language in this text.";
     } else {
-        // Neutral styling
-        statusCard.classList.add('success');
-
-        // Checkmark Icon
-        iconWrapper.innerHTML = `
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-        `;
-        verdictTitle.innerText = "Mostly Neutral";
-
-        document.getElementById('biased-content').classList.add('hidden');
-        document.getElementById('neutral-content').classList.remove('hidden');
+        // Override with Green "Safe" styling
+        alertBox.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+        alertBox.style.borderColor = 'rgba(34, 197, 94, 0.2)';
+        alertTitle.style.color = '#15803d';
+        alertDesc.style.color = '#15803d';
+        alertIcon.style.color = '#16a34a';
+        alertIcon.textContent = 'check_circle';
+        
+        alertTitle.textContent = "Highly Objective";
+        alertDesc.textContent = "This article relies on neutral, fact-based reporting.";
     }
 
-    // Shared confidence bar setup
-    confidenceText.innerText = `${confidencePercentage}%`;
+    // 3. Inject the Quotes & Categories into the Insights Card
+    const container = document.getElementById('biased-items-container');
+    container.innerHTML = '';
 
-    // Switch to result
-    switchState(states.RESULT);
+    if (!data.biased_items || data.biased_items.length === 0) {
+        container.innerHTML = '<p class="explanation-text" style="text-align: center;">No significant bias found in this text.</p>';
+        return;
+    }
 
-    // Trigger animation slightly after the container becomes visible
-    setTimeout(() => {
-        confidenceBar.style.width = `${data.is_hyperpartisan ? confidencePercentage : Math.max(0, 100 - confidencePercentage)}%`;
-    }, 150);
+    data.biased_items.forEach(item => {
+        // Build the new UI element for each quote
+        const itemHtml = `
+            <div class="insight-item">
+                <div style="display: inline-block; padding: 2px 8px; border-radius: 4px; background-color: var(--primary-light); color: var(--primary); font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">
+                    ${item.bias_type || 'Flagged Insight'}
+                </div>
+                <p class="quote-text">"${item.sentence}"</p>
+                <p class="explanation-text">${item.explanation}</p>
+            </div>
+        `;
+        container.innerHTML += itemHtml;
+    });
 }
 
-//I used Mozilla's readability.js to scrape an article.
+// --- HELPER FUNCTIONS ---
 function scrapePageText() {
     try {
-        // 1. Readability actually modifies the DOM when it runs. 
-        // We MUST clone the document first so we don't accidentally destroy the live webpage!
         var documentClone = document.cloneNode(true);
-
-        // 2. Pass the clone to Mozilla's engine
         var reader = new Readability(documentClone);
         var article = reader.parse();
 
         if (article && article.textContent) {
-            // 3. Clean up the extracted text (remove excessive whitespace and line breaks)
             return article.textContent.replace(/\s+/g, ' ').trim();
         } else {
             throw new Error("Readability could not parse the article.");
         }
     } catch (e) {
         console.error("Readability failed, falling back to basic extraction.", e);
-        // Fallback just in case the algorithm fails
         return document.body.innerText.replace(/\s+/g, ' ').trim();
     }
 }
 
-// Injected into the page to highlight multiple biased paragraphs
 function highlightSentencesInPage(sentences) {
     if (!sentences || sentences.length === 0) return;
 
     const elements = document.querySelectorAll('p, h1, h2, h3, h4, li');
     let scrolled = false;
-
-    // Helper: Removes ALL punctuation and squashes spaces for a pure word-to-word comparison
     const cleanText = (str) => str.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 
     elements.forEach(el => {
         const elClean = cleanText(el.innerText);
-        if (elClean.length < 15) return; // Skip tiny UI elements
+        if (elClean.length < 15) return;
 
         for (let sentence of sentences) {
             const sentenceClean = cleanText(sentence);
-
-            // Grab the first 35 characters (about 5-7 words) to act as a unique fingerprint
             const fingerprint = sentenceClean.substring(0, 35);
 
-            // If the element's clean text contains our fingerprint, it's a guaranteed match
             if (fingerprint.length > 10 && elClean.includes(fingerprint)) {
-
                 el.style.backgroundColor = 'rgba(252, 165, 165, 0.3)';
                 el.style.borderLeft = '4px solid #ef4444';
                 el.style.paddingLeft = '10px';
@@ -283,14 +234,13 @@ function highlightSentencesInPage(sentences) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     scrolled = true;
                 }
-
-                break; // Found a match, move to the next HTML element
+                break; 
             }
         }
     });
 }
 
-// --- NEW EVENT LISTENER: Clear Highlights Button ---
+// --- CLEAR HIGHLIGHTS LOGIC ---
 const clearHighlightsLogic = async () => {
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     chrome.scripting.executeScript({
@@ -298,26 +248,16 @@ const clearHighlightsLogic = async () => {
         func: removeHighlightsFromPage
     });
 };
-// Attach it to the button on the Results screen
 document.getElementById('clearHighlightsBtn')?.addEventListener('click', clearHighlightsLogic);
-
-// Attach it to the button on the Idle (Home) screen
 document.getElementById('clearHighlightsBtnIdle')?.addEventListener('click', clearHighlightsLogic);
 
-// --- NEW HELPER FUNCTION: The Eraser ---
-// Injected into the page to find our sticky notes and remove the CSS
 function removeHighlightsFromPage() {
-    // Find all elements we tagged with our specific data attribute
     const highlightedElements = document.querySelectorAll('[data-truthlens="true"]');
-
     highlightedElements.forEach(el => {
-        // Strip away ONLY our specific TruthLens styles
         el.style.backgroundColor = '';
         el.style.borderLeft = '';
         el.style.paddingLeft = '';
         el.style.borderRadius = '';
-
-        // Remove the sticky note tag so it's perfectly clean
         el.removeAttribute('data-truthlens');
     });
 }
