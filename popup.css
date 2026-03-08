@@ -1,13 +1,15 @@
 /* --- THEME ENGINE --- */
-:root {
-    /* LIGHT MODE (White & Teal) */
+
+/* 1. Light Mode (Teal & White) - Default and Explicit */
+:root,
+:root[data-theme="light"] {
     --primary: #17cfbf;
-    --primary-light: rgba(23, 207, 191, 0.1);
-    --bg-main: #f6f8f8;
-    --bg-card: #ffffff;
+    --primary-light: rgba(23, 207, 191, 0.15);
+    --bg-main: #f0fdfc; /* Soft teal-tinted background */
+    --bg-card: #ffffff; /* Pure white cards */
     --text-main: #0f172a;
-    --text-muted: #64748b;
-    --border-color: rgba(23, 207, 191, 0.15);
+    --text-muted: #475569;
+    --border-color: rgba(23, 207, 191, 0.2);
     
     /* Semantic Colors */
     --warning-bg: #fffbeb;
@@ -16,13 +18,30 @@
     --warning-icon: #d97706;
 }
 
+/* 2. Dark Mode (Orange & Brown) - Explicit */
+:root[data-theme="dark"] {
+    --primary: #ec5b13;
+    --primary-light: rgba(236, 91, 19, 0.15);
+    --bg-main: #221610;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: rgba(236, 91, 19, 0.2);
+    
+    /* Semantic Colors */
+    --warning-bg: rgba(217, 119, 6, 0.1);
+    --warning-border: rgba(217, 119, 6, 0.2);
+    --warning-text: #fbbf24;
+    --warning-icon: #f59e0b;
+}
+
+/* 3. System Dark Mode (OS is dark, AND user hasn't chosen 'Light') */
 @media (prefers-color-scheme: dark) {
-    :root {
-        /* DARK MODE (Brown & Orange) */
+    :root:not([data-theme="light"]) {
         --primary: #ec5b13;
         --primary-light: rgba(236, 91, 19, 0.15);
         --bg-main: #221610;
-        --bg-card: rgba(255, 255, 255, 0.03); /* Subtle glass effect */
+        --bg-card: rgba(255, 255, 255, 0.03);
         --text-main: #f8fafc;
         --text-muted: #94a3b8;
         --border-color: rgba(236, 91, 19, 0.2);

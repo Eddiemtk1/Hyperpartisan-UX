@@ -17,7 +17,7 @@
             <img src="logo.png" alt="TruthLens Logo" style="width: 24px; height: 24px; object-fit: contain;">
             TruthLens
         </h1>
-        <span class="material-symbols-outlined" style="color: var(--text-muted); cursor: pointer;">settings</span>
+        <span id="settingsIcon" class="material-symbols-outlined" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;">settings</span>
     </header>
 
     <main class="main-content">
@@ -91,6 +91,29 @@
 
         </div>
 
+        <div id="state-settings" class="state-screen">
+            <h2 style="margin-top: 0; margin-bottom: 20px;">Settings</h2>
+            
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Appearance</h4>
+                <select id="themeSelector" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-family: inherit; font-size: 14px; cursor: pointer;">
+                    <option value="system">System Default</option>
+                    <option value="light">Light Mode (Teal)</option>
+                    <option value="dark">Dark Mode (Orange)</option>
+                </select>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Data Management</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 0;">Clear all previously scanned articles from your browser's local memory.</p>
+                <button id="clearCacheBtn" class="btn-secondary" style="border-color: #ef4444; color: #ef4444;">Clear Scan Cache</button>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button id="backBtn" class="btn-primary">Back</button>
+            </div>
+        </div>
+        
     </main>
 
     <script src="popup.js"></script>
