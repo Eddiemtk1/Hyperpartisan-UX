@@ -182,7 +182,10 @@ function renderResult(data) {
                         <p style="margin: 0; font-size: 14px; font-style: italic; line-height: 1.6; color: var(--text-primary);">"${item.sentence}"</p>
                     </div>
                     <div class="explanation-box">
-                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Why is this flagged?</h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <h4 style="margin: 0; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Why is this flagged?</h4>
+                            <span class="bias-badge">${item.bias_type || 'General Bias'}</span>
+                        </div>
                         <p style="margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-secondary);">${item.explanation}</p>
                     </div>
                 </div>
