@@ -1,4 +1,4 @@
-// When the popup opens, check if we already scanned this specific tab
+//When the popup opens, it checks if this tab has been scanned before
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
         const tabId = tabs[0].id;
@@ -9,10 +9,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 console.log("TruthLens: Found cached results for this tab!");
                 const data = result[storageKey];
 
-                // 1. Rebuild the popup UI
+                //Rebuild the popup UI
                 renderResult(data);
 
-                // 2. Re-apply the highlights to the actual webpage!
+                //Re-apply the highlights to the webpage
                 if (data.is_hyperpartisan && data.biased_items) {
                     const sentencesToHighlight = data.biased_items.map(item => item.sentence);
                     chrome.scripting.executeScript({
@@ -26,7 +26,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     }
 });
 
-// UI State Management - FIXED ID TO MATCH HTML
 const states = {
     IDLE: 'state-idle',
     LOADING: 'state-loading',
@@ -36,12 +35,11 @@ const states = {
 };
 
 function switchState(targetState) {
-    // Hide all states by applying 'hidden' class or setting display:none
     Object.values(states).forEach(stateId => {
         const el = document.getElementById(stateId);
         if (el) {
             if (stateId === targetState) {
-                el.classList.add('active'); // Using our CSS .active class
+                el.classList.add('active');
             } else {
                 el.classList.remove('active');
             }
@@ -62,7 +60,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
             return;
         }
 
-        // Inject mozilla readability library first
+        //Inject mozilla readability library first
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['Readability.js']

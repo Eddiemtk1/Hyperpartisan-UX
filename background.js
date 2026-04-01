@@ -5,7 +5,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("TruthLens Background: Starting analysis...");
 
         // 1. Make the API call to your FastAPI backend
-        fetch('http://127.0.0.1:8000/analyze', {
+        fetch('http://127.0.0.1:8000/analyse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: request.text })
