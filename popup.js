@@ -82,7 +82,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
 
             // 3. NOW send the message to the background script
             chrome.runtime.sendMessage({
-                action: "analyzeArticle",
+                action: "analyseArticle",
                 text: scrapedText,
                 tabId: tab.id
             }, (response) => {

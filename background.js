@@ -1,7 +1,7 @@
 // This listens for messages from your popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
-    if (request.action === "analyzeArticle") {
+    if (request.action === "analyseArticle") {
         console.log("TruthLens Background: Starting analysis...");
 
         // 1. Make the API call to your FastAPI backend
