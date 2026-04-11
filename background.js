@@ -8,7 +8,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         fetch('http://127.0.0.1:8000/analyse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: request.text })
+            body: JSON.stringify({ 
+                title: request.title,
+                text: request.text 
+            })
         })
         .then(response => {
             if (!response.ok) throw new Error("API Server Error");
@@ -46,7 +49,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// We must define this here so the background script knows what to inject!
 function highlightSentencesInPage(sentences) {
     if (!sentences || sentences.length === 0) return;
 
