@@ -1,10 +1,9 @@
-// This listens for messages from your popup.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     if (request.action === "analyseArticle") {
         console.log("TruthLens Background: Starting analysis...");
 
-        // 1. Make the API call to your FastAPI backend
+        //Make the API call to your FastAPI backend
         fetch('http://127.0.0.1:8000/analyse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -18,16 +17,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             return response.json();
         })
         .then(data => {
-            // 2. Save the result to Chrome's local storage
+            //Saves the result to chrome's cache
             let storageObj = {};
             storageObj[`bias_result_${request.tabId}`] = data;
             
             chrome.storage.local.set(storageObj, () => {
-                // 3. Send the data back to the popup (if it is still open)
-                // We use try/catch because if the popup is closed, sending a response throws a harmless error
+                //send the data back to the popup, if its still open
                 try { sendResponse({ success: true, data: data }); } catch (e) {}
 
-                // 4. THE MAGIC UX FIX: Automatically highlight the page from the background!
+                // highlights the page from the background
                 if (data.is_hyperpartisan && data.biased_items) {
                     const sentencesToHighlight = data.biased_items.map(item => item.sentence);
                     
@@ -44,11 +42,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try { sendResponse({ success: false, error: error.message }); } catch (e) {}
         });
 
-        // Return true to tell Chrome we will send the response asynchronously
         return true; 
     }
 });
 
+//Highlighting function
 function highlightSentencesInPage(sentences) {
     if (!sentences || sentences.length === 0) return;
 
