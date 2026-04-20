@@ -1,12 +1,11 @@
-/* --- THEME ENGINE --- */
-
-/* 1. Light Mode (Teal & White) - Default and Explicit */
+/* Themes*/
+/*Light Mode (Teal & White), Default*/
 :root,
 :root[data-theme="light"] {
     --primary: #17cfbf;
     --primary-light: rgba(23, 207, 191, 0.15);
-    --bg-main: #f0fdfc; /* Soft teal-tinted background */
-    --bg-card: #ffffff; /* Pure white cards */
+    --bg-main: #f0fdfc; 
+    --bg-card: #ffffff; 
     --text-main: #0f172a;
     --text-muted: #475569;
     --border-color: rgba(23, 207, 191, 0.2);
@@ -18,7 +17,7 @@
     --warning-icon: #d97706;
 }
 
-/* 2. Dark Mode (Orange & Brown) - Explicit */
+/*Dark Mode (Orange & Brown) */
 :root[data-theme="dark"] {
     --primary: #ec5b13;
     --primary-light: rgba(236, 91, 19, 0.15);
@@ -35,7 +34,7 @@
     --warning-icon: #f59e0b;
 }
 
-/* 3. System Dark Mode (OS is dark, AND user hasn't chosen 'Light') */
+/*System Dark Mode */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
         --primary: #ec5b13;
@@ -54,7 +53,7 @@
     }
 }
 
-/* --- BASE STYLES --- */
+/* Base styles*/
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-main);
@@ -67,7 +66,7 @@ body {
     overflow: hidden;
 }
 
-/* --- LAYOUT --- */
+/*LAYOUT*/
 .header {
     display: flex;
     align-items: center;
@@ -97,7 +96,6 @@ body {
     padding: 16px;
 }
 
-/* --- CARDS & UI ELEMENTS --- */
 .card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -147,7 +145,7 @@ body {
     transition: width 1s ease-out;
 }
 
-/* --- WARNING ALERTS --- */
+/*Warning signs*/
 .alert-box {
     display: flex;
     gap: 12px;
@@ -172,7 +170,7 @@ body {
     opacity: 0.9;
 }
 
-/* --- QUOTE INSIGHTS --- */
+/*QUOTE INSIGHTS*/
 .insight-item {
     margin-bottom: 16px;
     padding-bottom: 16px;
@@ -199,7 +197,7 @@ body {
     margin: 8px 0 0 0;
 }
 
-/* --- BUTTONS --- */
+/*BUTTOONS*/
 .btn-primary {
     width: 100%;
     padding: 12px;
@@ -229,11 +227,9 @@ body {
 
 .btn-secondary:hover { background-color: var(--primary-light); }
 
-/* --- STATE MANAGEMENT --- */
 .state-screen { display: none; }
 .state-screen.active { display: block; }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }
