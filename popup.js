@@ -56,7 +56,6 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
         // Prevent scanning restricted Chrome pages
         if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
             console.error("Blocked: Cannot scan internal browser pages.");
-            // Optional: You can create a specific error screen later
             return;
         }
 
@@ -66,7 +65,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
             files: ['Readability.js']
         });
 
-        // 1. FIRST, inject the scraper to get the text from the webpage
+        // inject the scraper to get the text from the webpage
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: scrapePageText,
@@ -77,10 +76,9 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
                 return;
             }
 
-            // 2. DEFINE the scrapedText variable here!
             const scrapedText = injectionResults[0].result;
 
-            // 3. NOW send the message to the background script
+            //send the message to the background script
             chrome.runtime.sendMessage({
                 action: "analyseArticle",
                 text: scrapedText,
@@ -115,26 +113,24 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
     }
 });
 
-// FIXED: Hooked up to the new "Scan Another Article" button ID
 document.getElementById('resetBtn')?.addEventListener('click', () => {
     switchState(states.IDLE);
     document.getElementById('ui-confidence-fill').style.width = '0%';
 });
 
-// --- POPULATING THE NEW UI ---
 function renderResult(data) {
     switchState(states.RESULTS);
 
-    // 1. Update the Confidence Score Card
+    //Update the Confidence Score Card
     const confidencePct = Math.round(data.overall_confidence * 100);
     document.getElementById('ui-confidence-score').textContent = `${confidencePct}%`;
     
-    // Animate the progress bar width
+    //Animate the progress barr
     setTimeout(() => {
         document.getElementById('ui-confidence-fill').style.width = `${confidencePct}%`;
     }, 100); 
 
-    // 2. Update the Alert Box
+    //Update the Alert Box
     const alertBox = document.getElementById('ui-alert-box');
     const alertTitle = document.getElementById('ui-alert-title');
     const alertDesc = document.getElementById('ui-alert-desc');
@@ -164,7 +160,7 @@ function renderResult(data) {
         alertDesc.textContent = "This article relies on neutral, fact-based reporting.";
     }
 
-    // 3. Inject the Quotes & Categories into the Insights Card
+    //Inject the Quotes & Categories into the Insights Card
     const container = document.getElementById('biased-items-container');
     container.innerHTML = '';
 
