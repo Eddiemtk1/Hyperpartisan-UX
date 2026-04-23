@@ -50,6 +50,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function highlightSentencesInPage(sentences) {
     if (!sentences || sentences.length === 0) return;
 
+    if (document.querySelector('[data-truthlens="true"]')) {
+        console.log("TruthLens: Highlights already exist. Skipping redundant highlight pass.");
+        return;
+    }
+
     const elements = document.querySelectorAll('p, h1, h2, h3, h4, li');
     let scrolled = false;
 
