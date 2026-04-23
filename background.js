@@ -3,7 +3,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "analyseArticle") {
         console.log("TruthLens Background: Starting analysis...");
 
-        //Make the API call to your FastAPI backend
+        //Makes the API call to the FastAPI backend
         fetch('http://127.0.0.1:8000/analyse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try { sendResponse({ success: false, error: error.message }); } catch (e) {}
         });
 
-        return true; 
+        return true; //keeps the message channel open for async response
     }
 });
 

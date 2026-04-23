@@ -17,6 +17,7 @@
     --warning-icon: #d97706;
 }
 
+
 /*Dark Mode (Orange & Brown) */
 :root[data-theme="dark"] {
     --primary: #ec5b13;
@@ -33,6 +34,7 @@
     --warning-text: #fbbf24;
     --warning-icon: #f59e0b;
 }
+
 
 /*System Dark Mode */
 @media (prefers-color-scheme: dark) {
@@ -53,7 +55,8 @@
     }
 }
 
-/* Base styles*/
+
+/* Base layout*/
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-main);
@@ -65,6 +68,7 @@ body {
     flex-direction: column;
     overflow: hidden;
 }
+
 
 /*LAYOUT*/
 .header {
@@ -122,6 +126,8 @@ body {
     align-items: center;
 }
 
+
+/* Confidence meter */
 .score-value {
     font-size: 32px;
     font-weight: 800;
@@ -144,6 +150,8 @@ body {
     border-radius: 999px;
     transition: width 1s ease-out;
 }
+
+
 
 /*Warning signs*/
 .alert-box {
@@ -170,7 +178,9 @@ body {
     opacity: 0.9;
 }
 
-/*QUOTE INSIGHTS*/
+
+
+/*Quote insights*/
 .insight-item {
     margin-bottom: 16px;
     padding-bottom: 16px;
@@ -197,7 +207,7 @@ body {
     margin: 8px 0 0 0;
 }
 
-/*BUTTOONS*/
+/*Buttons*/
 .btn-primary {
     width: 100%;
     padding: 12px;
@@ -227,9 +237,12 @@ body {
 
 .btn-secondary:hover { background-color: var(--primary-light); }
 
+/* State screens */
 .state-screen { display: none; }
 .state-screen.active { display: block; }
 
+
+/*Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }

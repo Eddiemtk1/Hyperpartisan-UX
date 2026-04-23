@@ -26,6 +26,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     }
 });
 
+//All IDs of the available UI states
 const states = {
     IDLE: 'state-idle',
     LOADING: 'state-loading',
@@ -34,6 +35,7 @@ const states = {
     ERROR: 'state-error'
 };
 
+//This activates the target state-screen and hides the rest
 function switchState(targetState) {
     Object.values(states).forEach(stateId => {
         const el = document.getElementById(stateId);
@@ -53,19 +55,18 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
     try {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        // Prevent scanning restricted Chrome pages
+        //Prevents scanning restricted Chrome pages like chrome://, this changes depending on the browser
         if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
             console.error("Blocked: Cannot scan internal browser pages.");
             return;
         }
 
-        //Inject mozilla readability library first
+        //Inject readability.js to extrct article text
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['Readability.js']
         });
 
-        // inject the scraper to get the text from the webpage
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: scrapePageText,
@@ -75,7 +76,7 @@ document.getElementById('scanBtn').addEventListener('click', async () => {
                 console.error("Injection failed.");
                 return;
             }
-
+            //Here is where rsults are rendered
             const scrapedText = injectionResults[0].result;
 
             //send the message to the background script
@@ -259,14 +260,14 @@ function removeHighlightsFromPage() {
 
 // --- SETTINGS & THEME LOGIC ---
 
-// 1. Load the saved theme when the popup opens
+//Load the saved theme when the popup opens
 chrome.storage.local.get(['truthlens_theme'], (result) => {
     const savedTheme = result.truthlens_theme || 'system';
     document.getElementById('themeSelector').value = savedTheme;
     applyTheme(savedTheme);
 });
 
-// 2. Function to apply the theme to the HTML tag
+//Function to apply the theme to the HTML tag
 function applyTheme(theme) {
     if (theme === 'system') {
         document.documentElement.removeAttribute('data-theme');
@@ -275,32 +276,30 @@ function applyTheme(theme) {
     }
 }
 
-// 3. Listen for changes in the dropdown
+//Listen for changes in the dropdown
 document.getElementById('themeSelector').addEventListener('change', (e) => {
     const newTheme = e.target.value;
     applyTheme(newTheme);
     chrome.storage.local.set({ truthlens_theme: newTheme }); // Save it forever
 });
 
-// 4. Navigation Buttons
+// Navigation Buttons
 document.getElementById('settingsIcon').addEventListener('click', () => {
     switchState(states.SETTINGS);
 });
 
 document.getElementById('backBtn').addEventListener('click', () => {
-    // Return to the idle screen (or you could get fancy and remember the previous state!)
     switchState(states.IDLE);
 });
 
-// 5. Clear Cache Logic
+//Clear cache 
 document.getElementById('clearCacheBtn').addEventListener('click', () => {
     const btn = document.getElementById('clearCacheBtn');
     
-    // Find all keys in storage, and delete the ones starting with "bias_result_"
+    //Find all keys in storage, and delete the ones beginning with with "bias_result_"
     chrome.storage.local.get(null, (items) => {
         const keysToRemove = Object.keys(items).filter(key => key.startsWith('bias_result_'));
         chrome.storage.local.remove(keysToRemove, () => {
-            // Visual feedback
             const originalText = btn.textContent;
             btn.textContent = "Cache Cleared!";
             btn.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
